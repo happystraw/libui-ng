@@ -15,8 +15,11 @@ static int compareDouble(double a, double b, double epsilon)
 	return diff <= epsilon * eps_scale;
 }
 
-// It's not defined in cmocka.h but exists in cmocka.c
+#ifndef cm_print_error
+// For cmocka < 2.0, cm_print_error is not defined in header but exists in library
 void cm_print_error(const char * const format, ...);
+#define CMOCKA_PRINT_ERROR cm_print_error
+#endif
 
 // Check if a == b without aborting the test.
 static int expectDoubleEqual(double a, double b, int first_error, const char* error_prefix)

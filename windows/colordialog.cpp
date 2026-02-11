@@ -314,10 +314,15 @@ static void drawGrid(ID2D1RenderTarget *rt, D2D1_RECT_F *fillRect)
 #else
 	{
 		typedef D2D1_PIXEL_FORMAT *(__stdcall ID2D1RenderTarget::* GetPixelFormatF)(D2D1_PIXEL_FORMAT *) const;
-		GetPixelFormatF gpf;
+		typedef D2D1_PIXEL_FORMAT (__stdcall ID2D1RenderTarget::* GetPixelFormatOriginal)() const;
 
-		gpf = (GetPixelFormatF) (&(rt->GetPixelFormat));
-		(rt->*gpf)(&pformat);
+		union {
+			GetPixelFormatOriginal orig;
+			GetPixelFormatF target;
+		} converter;
+
+		converter.orig = &ID2D1RenderTarget::GetPixelFormat;
+		(rt->*(converter.target))(&pformat);
 	}
 #endif
 	hr = rt->CreateCompatibleRenderTarget(&size, NULL,
@@ -864,7 +869,7 @@ HWND replaceWithD2DScratch(HWND parent, int id, SUBCLASSPROC subproc, void *data
 	uiWindowsEnsureGetWindowRect(replace, &r);
 	mapWindowRect(NULL, parent, &r);
 	uiWindowsEnsureDestroyWindow(replace);
-	return newD2DScratch(parent, &r, (HMENU) id, subproc, (DWORD_PTR) data);
+	return newD2DScratch(parent, &r, (HMENU)(UINT_PTR)id, subproc, (DWORD_PTR) data);
 	// TODO preserve Z-order
 }
 

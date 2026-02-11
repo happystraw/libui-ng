@@ -145,10 +145,15 @@ D2D1_SIZE_F realGetSize(ID2D1RenderTarget *rt)
 #else
 	D2D1_SIZE_F size;
 	typedef D2D1_SIZE_F *(__stdcall ID2D1RenderTarget::* GetSizeF)(D2D1_SIZE_F *) const;
-	GetSizeF gs;
+	typedef D2D1_SIZE_F (__stdcall ID2D1RenderTarget::* GetSizeOriginal)() const;
 
-	gs = (GetSizeF) (&(rt->GetSize));
-	(rt->*gs)(&size);
+	union {
+		GetSizeOriginal orig;
+		GetSizeF target;
+	} converter;
+
+	converter.orig = &ID2D1RenderTarget::GetSize;
+	(rt->*(converter.target))(&size);
 	return size;
 #endif
 }
